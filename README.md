@@ -357,7 +357,94 @@ GET /user/profile?id=102
 
 ---
 
+A **Business Logic Flaw** in websites refers to a vulnerability in the application’s workflow or logic that allows attackers to manipulate the intended functionality to achieve unintended outcomes, often bypassing security controls or gaining unauthorized access. Unlike technical vulnerabilities like SQL injection or XSS, business logic flaws stem from design or implementation errors in how the application processes user actions, decisions, or data, making them harder to detect with automated tools.
 
+### What is Business Logic in Websites?
+Business logic is the set of rules and processes that define how a website operates to fulfill its intended purpose. It governs how user inputs are processed, how data flows, and how the system enforces its business rules (e.g., payment processing, user authentication, or account management). For example, in an e-commerce site, business logic dictates steps like adding items to a cart, applying discounts, processing payments, and updating inventory.
+
+### What is a Business Logic Flaw?
+A **Business Logic Flaw** occurs when an attacker can exploit gaps or assumptions in these rules to bypass restrictions or manipulate the system. These flaws arise because developers assume users will follow the intended flow, but attackers can deviate from it.
+
+### Common Examples of Business Logic Flaws
+1. **Authentication Bypasses**:
+   - Flaw: A site allows users to reset passwords by entering an email, but doesn’t validate the session or token properly.
+   - Exploit: An attacker guesses or manipulates the reset token to change another user’s password.
+   - Example: Sending a password reset request for `victim@email.com` and intercepting the response to access the reset link.
+
+2. **Parameter Tampering**:
+   - Flaw: A website trusts user input for critical parameters like price or user ID without server-side validation.
+   - Exploit: Changing `price=100` to `price=1` in a POST request to buy an item at a lower cost.
+   - Example: Modifying a hidden form field like `discount=10%` to `discount=90%`.
+
+3. **Insecure Direct Object References (IDOR)**:
+   - Flaw: The application exposes internal identifiers (e.g., user IDs, order IDs) and trusts client-side input without verifying permissions.
+   - Exploit: Changing `user_id=123` to `user_id=124` in a request to access another user’s data.
+   - Example: Accessing `https://site.com/profile?user_id=456` to view another user’s profile.
+
+4. **Race Conditions**:
+   - Flaw: The system doesn’t handle simultaneous requests properly, allowing multiple actions to interfere.
+   - Exploit: Submitting multiple payment requests at once to trick the system into processing only one charge for multiple items.
+   - Example: Rapidly clicking “Buy” to purchase an item multiple times before inventory updates.
+
+5. **Improper Workflow Validation**:
+   - Flaw: The application doesn’t enforce the correct sequence of steps in a process.
+   - Exploit: Skipping a payment confirmation step to complete an order without paying.
+   - Example: Directly accessing `https://site.com/order/confirm` without going through the checkout flow.
+
+6. **Abusing Business Rules**:
+   - Flaw: The system allows unintended use of features like coupons or refunds.
+   - Exploit: Applying a one-time-use coupon multiple times by manipulating API calls.
+   - Example: Reusing a `coupon_code=SUMMER20` by resending a previous request after clearing session data.
+
+### Why Are Business Logic Flaws Dangerous?
+- **Hard to Detect**: Automated scanners (e.g., Burp Suite, ZAP) often miss these because they require understanding the app’s intended flow.
+- **High Impact**: They can lead to financial loss, unauthorized access, or data breaches.
+- **Common in Bug Bounties**: Platforms like HackerOne and Bugcrowd see frequent reports of logic flaws, often yielding high payouts due to their severity.
+
+### How to Find Business Logic Flaws (For Bug Hunters/Pentesters)
+1. **Understand the Application**:
+   - Map out the website’s functionality (e.g., user roles, workflows, APIs).
+   - Use tools like Burp Suite to intercept requests and study endpoints.
+   - Example: Identify if an e-commerce site allows negative quantities in the cart (`quantity=-1`).
+
+2. **Test Assumptions**:
+   - Ask: What does the app assume about user behavior? Can you break it?
+   - Example: If a site limits one account per email, try registering with `user+1@gmail.com` to bypass restrictions.
+
+3. **Manipulate Inputs**:
+   - Modify parameters in requests (e.g., IDs, prices, statuses) using Burp Suite’s Repeater.
+   - Example: Change `role=user` to `role=admin` in a JSON payload to escalate privileges.
+
+4. **Test Edge Cases**:
+   - Try unexpected inputs (e.g., negative values, large numbers, null inputs).
+   - Example: Enter a negative amount in a transfer feature to see if it credits your account.
+
+5. **Exploit Race Conditions**:
+   - Use tools like Burp’s Turbo Intruder to send rapid, simultaneous requests.
+   - Example: Submit multiple withdrawal requests to drain an account before balance updates.
+
+6. **Analyze APIs**:
+   - Many logic flaws hide in poorly secured APIs. Use Postman or Burp to test undocumented endpoints.
+   - Example: Check if `PUT /api/order/123` allows changing another user’s order status.
+
+### How to Prevent Business Logic Flaws (For Developers)
+- **Server-Side Validation**: Never trust client-side inputs; validate everything on the server.
+- **Enforce Workflow**: Use state machines to ensure users follow the correct sequence (e.g., can’t confirm order without payment).
+- **Access Controls**: Verify user permissions for every action (e.g., check `user_id` ownership).
+- **Rate Limiting**: Prevent race conditions by limiting simultaneous requests.
+- **Testing**: Include logic flaw scenarios in pentesting; use threat modeling to identify risks early.
+
+### Real-World Example (2025 Context)
+In bug bounty reports on platforms like HackerOne, a common 2025 logic flaw involves **API misconfigurations**. For instance, a researcher found a flaw in a fintech app where sending a `POST /api/transfer` request with a negative amount credited the attacker’s account instead of debiting it. The flaw was due to missing server-side validation, earning a $10,000 bounty.
+
+### Pro Tips for Bug Hunters
+- **Document Everything**: Write clear, reproducible reports (e.g., steps, impact, PoC) to maximize bounty payouts.
+- **Focus on High-Value Targets**: Look for fintech, e-commerce, or SaaS apps where logic flaws have big impacts.
+- **Stay Updated**: Follow X accounts like @NahamSec or @bugcrowd for new flaw patterns.
+- **Practice**: Use labs like PortSwigger’s Web Security Academy to simulate logic flaws.
+
+### Want to Dive Deeper?
+If you have a specific website or scenario in mind (e.g., testing an e-commerce site), I can suggest targeted tests or tools. Alternatively, I can provide a step-by-step walkthrough for finding a specific type of logic flaw (e.g., IDOR or race conditions). Just let me know your focus area or skill level! 🛠️
 
 
 
