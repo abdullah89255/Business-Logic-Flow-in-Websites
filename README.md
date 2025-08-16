@@ -226,6 +226,139 @@ But you can use automation to **assist your manual testing**:
 * Always ask: *“What if I don’t follow the intended rules?”*
 
 ---
+Perfect follow-up 🙌 — because knowing how to **fix** Business Logic Flaws (BLFs) is just as important as finding them.
+
+Let’s go step by step:
+
+---
+
+# 🛠 How to Fix Business Logic Flaws
+
+Business Logic Flaws happen because **the application trusts the user too much** or fails to enforce rules properly.
+Fixing them = **strong backend validation, strict workflow checks, and proper access control**.
+
+---
+
+## ✅ Fixes + Examples
+
+### 1. **Enforce Server-Side Validation**
+
+🔹 Problem: App trusts hidden fields, cookies, or client-side scripts.
+🔹 Fix: Always validate on the backend.
+
+**Example: Price Tampering**
+
+```http
+POST /checkout
+price=1
+```
+
+* ❌ Wrong: Application takes `price=1` from client.
+* ✅ Fix: Server **recalculates the price** from the product ID stored in DB, not from user input.
+
+---
+
+### 2. **Strict Workflow Enforcement**
+
+🔹 Problem: Attackers skip or reorder steps.
+🔹 Fix: Use **state machines** to enforce step order.
+
+**Example: Skipping Payment**
+
+* ❌ Attacker directly accesses `/order-confirmation?order=123`.
+* ✅ Fix: Confirmation endpoint checks:
+
+  * Order status = `paid` in DB
+  * Transaction ID verified with payment gateway
+
+---
+
+### 3. **Rate Limiting & Uniqueness Checks**
+
+🔹 Problem: Replaying requests for coupons, stock, or reward points.
+🔹 Fix: Use **rate limits + one-time tokens**.
+
+**Example: Coupon Abuse**
+
+* ❌ Attacker applies coupon multiple times.
+* ✅ Fix:
+
+  * Mark coupon as *used* in DB after first redemption
+  * Enforce `unique (user_id, coupon_code)` constraint
+
+---
+
+### 4. **Robust Access Control (RBAC/ABAC)**
+
+🔹 Problem: IDOR (users accessing other users’ data).
+🔹 Fix: Always check **ownership & permissions**.
+
+**Example: IDOR**
+
+```http
+GET /user/profile?id=102
+```
+
+* ❌ Anyone can change `id=102`.
+* ✅ Fix: Backend checks:
+
+  * `profile.user_id == session.user_id`
+
+---
+
+### 5. **Handle Race Conditions**
+
+🔹 Problem: Parallel requests mess up stock, balance, or rewards.
+🔹 Fix: Use **locking or transactions**.
+
+**Example: Double Spending**
+
+* ❌ Two requests withdraw money at the same time → balance goes negative.
+* ✅ Fix: Database transaction:
+
+  ```sql
+  BEGIN;
+  SELECT balance FROM accounts WHERE id=101 FOR UPDATE;
+  UPDATE accounts SET balance = balance - 100 WHERE id=101;
+  COMMIT;
+  ```
+
+  → Prevents simultaneous withdrawals.
+
+---
+
+### 6. **Tokenization & Expiry**
+
+🔹 Problem: Reuse of old tokens (reset links, checkout sessions).
+🔹 Fix: Use **short-lived, single-use tokens**.
+
+**Example: Password Reset**
+
+* ❌ Reset token never expires → attacker reuses old link.
+* ✅ Fix:
+
+  * Token expires in 10 min
+  * Invalidate all tokens once password reset is completed
+
+---
+
+# 🔒 Summary
+
+* **Validate everything server-side** (price, coupon, permissions).
+* **Track state properly** (force correct order of steps).
+* **Enforce uniqueness & rate limits** (one coupon = one use).
+* **Check permissions strictly** (users only see their own data).
+* **Prevent race conditions** (DB transactions, locks).
+* **Expire tokens quickly** (reset links, checkout sessions).
+
+---
+
+⚡ In short: **Fixing BLFs = coding defensively against misuse, not just happy paths.**
+
+---
+
+
+
 
 
 
